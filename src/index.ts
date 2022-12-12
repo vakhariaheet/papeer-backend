@@ -26,16 +26,14 @@ const db = pool.promise();
 
 app.post('/upload', upload.single('file'), async (req, res) => {
 	const file = req.file;
-	const { subject, exam, examType, course, code } = req.query;
+	const { subject, exam, examType, course, code, year, semester } = req.query;
 	if (!code) {
 		return res.status(401).json({ message: 'No code' });
 	}
-	console.log(req.query);
 	const isValid = authenticator.verify({
 		secret: process.env.MFA_SECRET as string,
 		token: code as string,
 	});
-	console.log(isValid, process.env.MFA_SECRET);
 	if (!isValid) {
 		return res.status(401).json({ message: 'Invalid code' });
 	}
@@ -44,7 +42,7 @@ app.post('/upload', upload.single('file'), async (req, res) => {
 	}
 	const url = await uploadToS3(file.path, file.originalname);
 	await db.query(
-		`INSERT INTO papers (id,subject, exam, exam_type, course, url) VALUES ('${uuid()}', '${subject}', '${exam}', '${examType}', '${course}', '${url}')`,
+		`INSERT INTO papers (id,subject, exam, exam_type, course, url,year,semester) VALUES ('${uuid()}', '${subject}', '${exam}', '${examType}', '${course}', '${url}','${year}','${semester}')`,
 	);
 	res.json({
 		message: 'File uploaded successfully',
